@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: extrato-pagstar-app
+    env: python
+    plan: free
+    buildCommand: |
+      pip install -r requirements.txt
+      playwright install chromium
+    startCommand: streamlit run app.py
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
