@@ -1,9 +1,4 @@
-services:
-  - type: web
-    name: extrato-pagstar
-    env: python
-    buildCommand:
-      - pip install -r requirements.txt
-      - playwright install chromium
-    startCommand: streamlit run app.py
-    plan: free
+buildCommand: |
+  pip install -r requirements.txt
+  playwright install chromium
+startCommand: streamlit run app.py
