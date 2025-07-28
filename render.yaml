@@ -1,4 +1,9 @@
-build:
-  commands:
-    - pip install -r requirements.txt
-    - playwright install chromium
+services:
+  - type: web
+    name: extrato-pagstar
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "streamlit run app.py"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10"
