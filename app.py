@@ -1,22 +1,19 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
-
 import streamlit as st
 import asyncio
 from datetime import datetime
 import os
+import subprocess
 from playwright.async_api import async_playwright
 
-
-# In[ ]:
-
+# 🚨 Instala o navegador Chromium no ambiente do Render
+subprocess.run("playwright install chromium".split(), check=True)
 
 async def baixar_extrato(data_inicio, data_fim):
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
+        browser = await p.chromium.launch(headless=True)  # Use headless=True no Render
         context = await browser.new_context()
         page = await context.new_page()
 
@@ -55,7 +52,7 @@ async def baixar_extrato(data_inicio, data_fim):
         await browser.close()
         return caminho
 
-# Streamlit interface
+# Interface do Streamlit
 st.set_page_config(page_title="Download Extrato Pagstar", layout="centered")
 st.title("📄 Download de Extrato - Pagstar")
 
@@ -70,8 +67,10 @@ with st.form("form_extrato"):
 
 if submitted:
     st.info("Aguardando geração do extrato...")
-    caminho = asyncio.run(baixar_extrato(str(data_inicio), str(data_fim)))
-    st.success("✅ Extrato gerado com sucesso!")
-    with open(caminho, "rb") as f:
-        st.download_button("📥 Clique para baixar", f, file_name=os.path.basename(caminho))
-
+    try:
+        caminho = asyncio.run(baixar_extrato(str(data_inicio), str(data_fim)))
+        st.success("✅ Extrato gerado com sucesso!")
+        with open(caminho, "rb") as f:
+            st.download_button("📥 Clique para baixar", f, file_name=os.path.basename(caminho))
+    except Exception as e:
+        st.error(f"❌ Erro ao gerar extrato: {e}")
