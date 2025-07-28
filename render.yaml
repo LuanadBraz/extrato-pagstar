@@ -1,4 +1,4 @@
-buildCommand: |
-  pip install -r requirements.txt
-  playwright install chromium
-startCommand: streamlit run app.py
+build:
+  commands:
+    - pip install -r requirements.txt
+    - playwright install chromium
