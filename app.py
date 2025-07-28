@@ -1,58 +1,55 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import streamlit as st
-import asyncio
 from datetime import datetime
 import os
-import subprocess
-from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
 
-# 🚨 Instala o navegador Chromium no ambiente do Render
-subprocess.run("playwright install chromium".split(), check=True)
+def baixar_extrato(data_inicio, data_fim):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False)
+        context = browser.new_context()
+        page = context.new_page()
 
-async def baixar_extrato(data_inicio, data_fim):
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)  # Use headless=True no Render
-        context = await browser.new_context()
-        page = await context.new_page()
+        page.goto("https://finance.pagstar.com/")
+        st.info("Aguardando login manual...")
 
-        await page.goto("https://finance.pagstar.com/")
-        await page.wait_for_timeout(20000)  # Tempo para login manual
+        page.wait_for_timeout(20000)  # 20 segundos para login manual
 
-        await page.get_by_role("button", name="Extrato", exact=True).click()
-        await page.wait_for_timeout(2000)
+        try:
+            page.get_by_role("button", name="Extrato", exact=True).click()
+        except:
+            browser.close()
+            raise Exception("❌ Botão 'Extrato' não encontrado.")
 
-        await page.get_by_role("button", name="Detalhado", exact=True).click()
-        await page.wait_for_timeout(2000)
+        page.wait_for_timeout(2000)
+        page.get_by_role("button", name="Detalhado", exact=True).click()
+        page.wait_for_timeout(2000)
+        page.get_by_role("button", name="Exportar", exact=True).click()
+        page.wait_for_timeout(2000)
 
-        await page.get_by_role("button", name="Exportar", exact=True).click()
-        await page.wait_for_timeout(2000)
-
+        # Preenche datas
         data_inicio_fmt = datetime.strptime(data_inicio, "%Y-%m-%d").strftime("%Y-%m-%d")
         data_fim_fmt = datetime.strptime(data_fim, "%Y-%m-%d").strftime("%Y-%m-%d")
 
-        await page.fill('#initialDate', f"{data_inicio_fmt}T00:00")
-        await page.fill('#finalDate', f"{data_fim_fmt}T23:59")
-        await page.wait_for_timeout(1000)
+        page.fill('#initialDate', f"{data_inicio_fmt}T00:00")
+        page.fill('#finalDate', f"{data_fim_fmt}T23:59")
+        page.wait_for_timeout(1000)
 
-        await page.get_by_role("button", name="Excel", exact=True).click()
-        await page.wait_for_timeout(1000)
+        page.get_by_role("button", name="Excel", exact=True).click()
+        page.wait_for_timeout(1000)
 
         with page.expect_download() as download_info:
-            await page.get_by_role("button", name="Baixar Relatório", exact=True).click()
-
-        download = await download_info.value
+            page.get_by_role("button", name="Baixar Relatório", exact=True).click()
+        download = download_info.value
 
         nome_arquivo = f"Extrato_Pagstar_{data_inicio_fmt}_a_{data_fim_fmt}.csv"
         caminho = os.path.join("downloads", nome_arquivo)
         os.makedirs("downloads", exist_ok=True)
-        await download.save_as(caminho)
+        download.save_as(caminho)
 
-        await browser.close()
+        browser.close()
         return caminho
 
-# Interface do Streamlit
+# Interface Streamlit
 st.set_page_config(page_title="Download Extrato Pagstar", layout="centered")
 st.title("📄 Download de Extrato - Pagstar")
 
@@ -66,11 +63,11 @@ with st.form("form_extrato"):
     submitted = st.form_submit_button("🔽 Baixar Extrato")
 
 if submitted:
-    st.info("Aguardando geração do extrato...")
     try:
-        caminho = asyncio.run(baixar_extrato(str(data_inicio), str(data_fim)))
+        st.info("Aguardando geração do extrato... Realize o login manual na janela que será aberta.")
+        caminho = baixar_extrato(str(data_inicio), str(data_fim))
         st.success("✅ Extrato gerado com sucesso!")
         with open(caminho, "rb") as f:
             st.download_button("📥 Clique para baixar", f, file_name=os.path.basename(caminho))
     except Exception as e:
-        st.error(f"❌ Erro ao gerar extrato: {e}")
+        st.error(f"❌ Erro ao gerar extrato:\n\n{e}")
