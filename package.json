@@ -1,7 +1,0 @@
-{
-  "name": "extrato-pagstar",
-  "version": "1.0.0",
-  "description": "Render deploy to install playwright",
-  "scripts": {},
-  "dependencies": {}
-}
