@@ -1,11 +1,12 @@
 import streamlit as st
 from datetime import datetime
 import os
+import io
 from playwright.sync_api import sync_playwright
 
 def baixar_extrato(data_inicio, data_fim):
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(headless=True)
         context = browser.new_context()
         page = context.new_page()
 
@@ -41,16 +42,15 @@ def baixar_extrato(data_inicio, data_fim):
             page.get_by_role("button", name="Baixar Relatório", exact=True).click()
         download = download_info.value
 
+        # Salva em memória
+        buffer = io.BytesIO()
+        download.save_as(buffer)
+        buffer.seek(0)
+
         nome_arquivo = f"Extrato_Pagstar_{data_inicio_fmt}_a_{data_fim_fmt}.csv"
-        caminho = os.path.join("downloads", nome_arquivo)
-        import io
-        # Salvar em memória
-	buffer = io.BytesIO()
-	download.save_as(buffer)
-	buffer.seek(0)
 
         browser.close()
-	return buffer, nome_arquivo
+        return buffer, nome_arquivo
 
 # Interface Streamlit
 st.set_page_config(page_title="Download Extrato Pagstar", layout="centered")
@@ -69,8 +69,7 @@ if submitted:
     try:
         st.info("Aguardando geração do extrato... Realize o login manual na janela que será aberta.")
         buffer, nome_arquivo = baixar_extrato(str(data_inicio), str(data_fim))
+        st.success("✅ Extrato gerado com sucesso!")
         st.download_button("📥 Clique para baixar", buffer, file_name=nome_arquivo)
-        with open(caminho, "rb") as f:
-            st.download_button("📥 Clique para baixar", f, file_name=os.path.basename(caminho))
     except Exception as e:
         st.error(f"❌ Erro ao gerar extrato:\n\n{e}")
