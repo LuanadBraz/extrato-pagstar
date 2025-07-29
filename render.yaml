@@ -2,8 +2,8 @@ services:
   - type: web
     name: extrato-pagstar
     env: python
-    buildCommand: "bash setup.sh"
-    startCommand: "streamlit run app.py"
+    buildCommand: "./build.sh"
+    startCommand: "streamlit run app.py --server.port 10000 --server.address 0.0.0.0"
     envVars:
       - key: PYTHON_VERSION
         value: "3.10"
