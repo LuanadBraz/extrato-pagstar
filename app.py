@@ -43,11 +43,14 @@ def baixar_extrato(data_inicio, data_fim):
 
         nome_arquivo = f"Extrato_Pagstar_{data_inicio_fmt}_a_{data_fim_fmt}.csv"
         caminho = os.path.join("downloads", nome_arquivo)
-        os.makedirs("downloads", exist_ok=True)
-        download.save_as(caminho)
+        import io
+        # Salvar em memória
+	buffer = io.BytesIO()
+	download.save_as(buffer)
+	buffer.seek(0)
 
         browser.close()
-        return caminho
+	return buffer, nome_arquivo
 
 # Interface Streamlit
 st.set_page_config(page_title="Download Extrato Pagstar", layout="centered")
@@ -65,8 +68,8 @@ with st.form("form_extrato"):
 if submitted:
     try:
         st.info("Aguardando geração do extrato... Realize o login manual na janela que será aberta.")
-        caminho = baixar_extrato(str(data_inicio), str(data_fim))
-        st.success("✅ Extrato gerado com sucesso!")
+        buffer, nome_arquivo = baixar_extrato(str(data_inicio), str(data_fim))
+        st.download_button("📥 Clique para baixar", buffer, file_name=nome_arquivo)
         with open(caminho, "rb") as f:
             st.download_button("📥 Clique para baixar", f, file_name=os.path.basename(caminho))
     except Exception as e:
