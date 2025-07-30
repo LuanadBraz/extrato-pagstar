@@ -2,8 +2,13 @@ services:
   - type: web
     name: extrato-pagstar
     env: python
-    buildCommand: "./build.sh"
-    startCommand: "streamlit run app.py"
+    plan: free
+    region: oregon
+    buildCommand: |
+      pip install -r requirements.txt
+      python -m playwright install --with-deps chromium
+    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
     envVars:
-      - key: PYTHON_VERSION
-        value: "3.10"
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: /opt/render/.cache/ms-playwright
+
