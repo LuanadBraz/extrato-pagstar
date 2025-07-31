@@ -1,13 +1,12 @@
 services:
   - type: web
     name: extrato-pagstar
-    env: python
+    env: docker
     plan: free
-    region: oregon
-    buildCommand: |
-      pip install -r requirements.txt
-      python -m playwright install --with-deps chromium
-    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
     envVars:
-      - key: PYTHON_VERSION
-        value: "3.10.12"
+      - key: PAGSTAR_USUARIO
+        sync: false   # valor será informado no dashboard após o primeiro deploy
+      - key: PAGSTAR_SENHA
+        sync: false
