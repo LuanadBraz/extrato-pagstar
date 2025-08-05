@@ -1,3 +1,4 @@
+
 services:
   - type: web
     name: extrato-pagstar
@@ -5,8 +6,9 @@ services:
     plan: free
     dockerfilePath: ./Dockerfile
     autoDeploy: true
+    healthCheckPath: /
     envVars:
       - key: PAGSTAR_USUARIO
-        sync: false   # valor será informado no dashboard após o primeiro deploy
+        sync: false
       - key: PAGSTAR_SENHA
         sync: false
